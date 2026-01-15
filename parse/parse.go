@@ -6,42 +6,33 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
-	"maps"
 	"strings"
+
+	"github.com/AlexanderYAPPO/go-papa-carlo/entity"
 )
 
-func Parse(targetStructName string, pathToFile string) {
+func Parse(targetStructName string, pathToFile string) entity.ParsingResult {
 	fset := token.NewFileSet()
-
 	node, err := parser.ParseFile(fset, pathToFile, nil, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	imports := captureImports(node)
-	fmt.Println("DEBUG: ---------- imports ----------------------")
-	for alias, path := range imports {
-		fmt.Printf("%s -> %s\n", alias, path)
-	}
-	fmt.Println("DEBUG: ---------- imports ----------------------")
-
-	fmt.Println("")
-
-	allFieldsMap := captureFields(node, targetStructName)
-	fmt.Println("DEBUG: ---------- all fields map ----------------------")
-	for field, typeName := range allFieldsMap {
-		fmt.Printf("%s -> %s\n", field, typeName)
-	}
-	fmt.Println("DEBUG: ---------- all fields map ----------------------")
+	allFields := captureFields(node, targetStructName)
+	return entity.ParsingResult{Imports: imports, Fields: allFields}
 }
 
-func processField(field *ast.Field) map[string]string {
-	fieldMap := make(map[string]string)
+func processField(field *ast.Field) []entity.Field {
+	fields := []entity.Field{}
 	typeName := getTypeName(field.Type)
 	for _, name := range field.Names {
-		fieldMap[name.Name] = typeName
+		// iterate to cover multipla names on a single field:
+		// type S struct {
+		// 	A, B int
+		// }
+		fields = append(fields, entity.Field{Name: name.Name, Type: typeName})
 	}
-	return fieldMap
+	return fields
 }
 
 func getTypeName(expr ast.Expr) string {
@@ -105,8 +96,8 @@ func getTypeName(expr ast.Expr) string {
 	return typeName
 }
 
-func captureFields(node *ast.File, targetStructName string) map[string]string {
-	allFieldsMap := make(map[string]string) // field_name -> type_name
+func captureFields(node *ast.File, targetStructName string) []entity.Field {
+	allFields := []entity.Field{}
 	ast.Inspect(node, func(n ast.Node) bool {
 		if n == nil {
 			return true
@@ -127,27 +118,27 @@ func captureFields(node *ast.File, targetStructName string) map[string]string {
 		}
 
 		for _, field := range st.Fields.List {
-			fieldMap := processField(field)
-			maps.Copy(allFieldsMap, fieldMap)
+			parsedFlatField := processField(field)
+			allFields = append(allFields, parsedFlatField...)
 		}
 		return true
 	})
-	return allFieldsMap
+	return allFields
 }
 
-func captureImports(f *ast.File) map[string]string {
-	importMap := make(map[string]string)
+func captureImports(f *ast.File) []entity.Import {
+	imports := []entity.Import{}
 
 	for _, imp := range f.Imports {
 		fullPath := strings.Trim(imp.Path.Value, "\"")
 
 		if imp.Name != nil {
-			importMap[imp.Name.Name] = fullPath
+			imports = append(imports, entity.Import{Alias: imp.Name.Name, Path: fullPath})
 		} else {
 			parts := strings.Split(fullPath, "/")
 			shortName := parts[len(parts)-1]
-			importMap[shortName] = fullPath
+			imports = append(imports, entity.Import{Alias: shortName, Path: fullPath})
 		}
 	}
-	return importMap
+	return imports
 }
