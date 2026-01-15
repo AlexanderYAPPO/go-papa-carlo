@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	res := parse.Parse("ClassA", "/Users/yappo/projects/go-test-project/pkg1/class_a.go")
+	res := parse.Parse("ClassA", "fixtures/struct_with_many_fields/pkg1/class_a.go")
 	fmt.Println("Imports: --------------------------------")
 	for _, i := range res.Imports {
 		fmt.Println(i.Alias, i.Path)
