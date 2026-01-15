@@ -133,11 +133,11 @@ func captureImports(f *ast.File) []entity.Import {
 		fullPath := strings.Trim(imp.Path.Value, "\"")
 
 		if imp.Name != nil {
-			imports = append(imports, entity.Import{Alias: imp.Name.Name, Path: fullPath})
+			imports = append(imports, entity.Import{ReferenceName: imp.Name.Name, Path: fullPath, IsAlias: true})
 		} else {
 			parts := strings.Split(fullPath, "/")
 			shortName := parts[len(parts)-1]
-			imports = append(imports, entity.Import{Alias: shortName, Path: fullPath})
+			imports = append(imports, entity.Import{ReferenceName: shortName, Path: fullPath, IsAlias: false})
 		}
 	}
 	return imports

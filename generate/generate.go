@@ -1,0 +1,30 @@
+package generate
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/AlexanderYAPPO/go-papa-carlo/entity"
+)
+
+func Generate(result entity.ParsingResult) string {
+	codeLines := []string{}
+	codeLines = append(codeLines, generateImports(result.Imports)...)
+
+	return strings.Join(codeLines, "\n")
+}
+
+func generateImports(imports []entity.Import) []string {
+	codeLines := []string{}
+	codeLines = append(codeLines, "import (")
+	for _, i := range imports {
+		newLine := fmt.Sprintf("    %s", i.ReferenceName)
+		if i.IsAlias {
+			newLine = fmt.Sprintf("    %s \"%s\"", i.ReferenceName, i.Path)
+		}
+		codeLines = append(codeLines, newLine)
+	}
+	codeLines = append(codeLines, ")")
+	return codeLines
+}
+

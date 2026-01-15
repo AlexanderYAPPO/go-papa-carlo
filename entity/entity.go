@@ -6,8 +6,9 @@ type ParsingResult struct {
 }
 
 type Import struct {
-	Alias string
-	Path  string
+	ReferenceName string
+	Path          string
+	IsAlias       bool
 }
 
 type Field struct {
