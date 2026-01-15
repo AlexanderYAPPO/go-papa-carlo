@@ -6,6 +6,7 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
+	"maps"
 	"strings"
 )
 
@@ -17,41 +18,35 @@ func Parse(targetStructName string, pathToFile string) {
 		log.Fatal(err)
 	}
 
-	ast.Inspect(node, func(n ast.Node) bool {
-		if n == nil {
-			return true
-		}
+	imports := captureImports(node)
+	fmt.Println("DEBUG: ---------- imports ----------------------")
+	for alias, path := range imports {
+		fmt.Printf("%s -> %s\n", alias, path)
+	}
+	fmt.Println("DEBUG: ---------- imports ----------------------")
 
-		ts, ok := n.(*ast.TypeSpec)
-		if !ok {
-			return true
-		}
+	fmt.Println("")
 
-		st, ok := ts.Type.(*ast.StructType)
-		if !ok {
-			return false
-		}
-
-		if ts.Name.Name != targetStructName {
-			return true
-		}
-
-		fmt.Printf("Found Struct: %s\n", ts.Name.Name)
-
-		fmt.Println("DEBUG: ---------- going through fields ----------------------")
-		for _, field := range st.Fields.List {
-			processField(field)
-		}
-		fmt.Println("DEBUG: ---------- ended going through fields ----------------------")
-		return true
-	})
+	allFieldsMap := captureFields(node, targetStructName)
+	fmt.Println("DEBUG: ---------- all fields map ----------------------")
+	for field, typeName := range allFieldsMap {
+		fmt.Printf("%s -> %s\n", field, typeName)
+	}
+	fmt.Println("DEBUG: ---------- all fields map ----------------------")
 }
 
-func processField(field *ast.Field) {
-	typeName := ""
+func processField(field *ast.Field) map[string]string {
+	fieldMap := make(map[string]string)
+	typeName := getTypeName(field.Type)
+	for _, name := range field.Names {
+		fieldMap[name.Name] = typeName
+	}
+	return fieldMap
+}
 
-	// Determine the type of the field
-	switch t := field.Type.(type) {
+func getTypeName(expr ast.Expr) string {
+	var typeName string
+	switch t := expr.(type) {
 	case *ast.Ident:
 		typeName = t.Name
 
@@ -73,15 +68,17 @@ func processField(field *ast.Field) {
 			pkgName = ident.Name
 		}
 		typeName = pkgName + "." + t.Sel.Name
+
 	case *ast.ChanType:
 		direction := "chan"
 		switch t.Dir {
 		case ast.RECV:
-			direction = "<-chan" // Receive-only
+			direction = "<-chan"
 		case ast.SEND:
-			direction = "chan<-" // Send-only
+			direction = "chan<-"
 		}
 		typeName = direction + " " + getTypeName(t.Value)
+
 	case *ast.FuncType:
 		params := []string{}
 		if t.Params != nil {
@@ -100,30 +97,57 @@ func processField(field *ast.Field) {
 		typeName = fmt.Sprintf("func(%s) (%s)",
 			strings.Join(params, ", "),
 			strings.Join(results, ", "))
-	}
 
-	for _, name := range field.Names {
-		fmt.Printf("%s %s\n", name.Name, typeName)
-	}
+	case *ast.InterfaceType:
+		return "interface{}"
 
+	}
+	return typeName
 }
 
-func getTypeName(expr ast.Expr) string {
-	switch t := expr.(type) {
-	case *ast.Ident:
-		return t.Name
-	case *ast.StarExpr:
-		return "*" + getTypeName(t.X)
-	case *ast.ArrayType:
-		return "[]" + getTypeName(t.Elt)
-	case *ast.SelectorExpr:
-		// This handles pkg.Type or alias.Type
-		pkgName := ""
-		if ident, ok := t.X.(*ast.Ident); ok {
-			pkgName = ident.Name
+func captureFields(node *ast.File, targetStructName string) map[string]string {
+	allFieldsMap := make(map[string]string) // field_name -> type_name
+	ast.Inspect(node, func(n ast.Node) bool {
+		if n == nil {
+			return true
 		}
-		return pkgName + "." + t.Sel.Name
-	default:
-		return "unknown"
+
+		ts, ok := n.(*ast.TypeSpec)
+		if !ok {
+			return true
+		}
+
+		st, ok := ts.Type.(*ast.StructType)
+		if !ok {
+			return false
+		}
+
+		if ts.Name.Name != targetStructName {
+			return true
+		}
+
+		for _, field := range st.Fields.List {
+			fieldMap := processField(field)
+			maps.Copy(allFieldsMap, fieldMap)
+		}
+		return true
+	})
+	return allFieldsMap
+}
+
+func captureImports(f *ast.File) map[string]string {
+	importMap := make(map[string]string)
+
+	for _, imp := range f.Imports {
+		fullPath := strings.Trim(imp.Path.Value, "\"")
+
+		if imp.Name != nil {
+			importMap[imp.Name.Name] = fullPath
+		} else {
+			parts := strings.Split(fullPath, "/")
+			shortName := parts[len(parts)-1]
+			importMap[shortName] = fullPath
+		}
 	}
+	return importMap
 }
