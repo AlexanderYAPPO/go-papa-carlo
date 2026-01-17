@@ -3,6 +3,7 @@ package entity
 type ParsingResult struct {
 	Imports []Import
 	Fields  []Field
+	TargetTypeName string // TODO: not populated
 }
 
 type Import struct {

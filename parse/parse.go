@@ -19,7 +19,11 @@ func Parse(targetStructName string, pathToFile string) entity.ParsingResult {
 	}
 	imports := captureImports(node)
 	allFields := captureFields(node, targetStructName)
-	return entity.ParsingResult{Imports: imports, Fields: allFields}
+	return entity.ParsingResult{
+		Imports:        imports,
+		Fields:         allFields,
+		TargetTypeName: targetStructName,
+	}
 }
 
 func processField(field *ast.Field) []entity.Field {
