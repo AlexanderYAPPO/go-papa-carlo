@@ -7,8 +7,12 @@ import (
 	"github.com/AlexanderYAPPO/go-papa-carlo/entity"
 )
 
+// Generate creates source code for builders based on the parsing result.
 func Generate(result entity.ParsingResult) string {
 	codeLines := []string{}
+	if result.PackageName != "" {
+		codeLines = append(codeLines, fmt.Sprintf("package %s", result.PackageName), "")
+	}
 	if len(result.Imports) > 0 {
 		codeLines = append(codeLines, generateImports(result.Imports)...)
 	}

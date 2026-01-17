@@ -23,6 +23,7 @@ func Parse(targetStructName string, pathToFile string) entity.ParsingResult {
 		Imports:        imports,
 		Fields:         allFields,
 		TargetTypeName: targetStructName,
+		PackageName:    node.Name.Name,
 	}
 }
 
