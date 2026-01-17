@@ -84,7 +84,7 @@ type MethodNew struct {
 func (m MethodNew) Generate() []string {
 	firstBuilderName := builderName(m.FirstField)
 	return []string{
-		fmt.Sprintf("func New() %s {", firstBuilderName),
+		fmt.Sprintf("func New%sBuilder() %s {", m.TargetType, firstBuilderName),
 		fmt.Sprintf("\temptyTarget := &%s{}", m.TargetType),
 		fmt.Sprintf("\treturn %s{t: emptyTarget}", firstBuilderName),
 		"}",
