@@ -1,0 +1,17 @@
+package main
+
+import (
+	"github.com/AlexanderYAPPO/go-papa-carlo/test_env/struct_with_few_fields/pkg1"
+	"time"
+	"fmt"
+)
+
+func main() {
+	obj := pkg1.NewStructWithFewFieldsBuilder().
+		WithFieldInt(1).
+		WithFieldBool(true).
+		WithFieldDatetimeDatetime(time.Date(2026, 1, 17, 15, 42, 10, 0, time.UTC))
+		WithMapField(map[string]int{"two": 2, "three": 3}).
+		Build()
+	fmt.Printf("%#v\n", obj)
+}
