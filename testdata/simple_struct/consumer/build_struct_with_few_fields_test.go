@@ -1,12 +1,14 @@
-package main
+package consumer
 
 import (
-	"github.com/AlexanderYAPPO/go-papa-carlo/test_env/struct_with_few_fields/pkg1"
 	"time"
 	"fmt"
+	"testing"
+
+	"example.com/fixture/pkg1"
 )
 
-func main() {
+func TestBuilderWorks(t *testing.T) {
 	obj := pkg1.NewStructWithFewFieldsBuilder().
 		WithFieldInt(1).
 		WithFieldBool(true).
