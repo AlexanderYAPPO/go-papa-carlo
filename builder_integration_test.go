@@ -9,6 +9,13 @@ import (
 	"github.com/AlexanderYAPPO/go-papa-carlo/pipeline"
 )
 
+const goModContent = `module example.com/fixture
+
+go 1.20
+
+require github.com/stretchr/testify v1.9.0
+`
+
 func TestBuilderScenarios(t *testing.T) {
 	t.Run("struct_with_few_fields", func(t *testing.T) {
 		runScenario(t,
@@ -35,7 +42,7 @@ func runScenario(t *testing.T, structPath, structName, usagePath string) {
 func createPackage(t *testing.T) string {
 	t.Helper()
 	tempDir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte("module example.com/fixture\n\ngo 1.20\n"), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(tempDir, "go.mod"), []byte(goModContent), 0644); err != nil {
 		t.Fatalf("write go.mod: %v", err)
 	}
 	return tempDir
@@ -54,7 +61,7 @@ func copyGoFile(t *testing.T, tempDir, srcPath string) string {
 
 func runGoTest(t *testing.T, tempDir string) {
 	t.Helper()
-	cmd := exec.Command("go", "test", "./...")
+	cmd := exec.Command("go", "test", "-mod=mod", "./...")
 	cmd.Dir = tempDir
 	cmd.Env = append(os.Environ(), "GOWORK=off", "GOTOOLCHAIN=local")
 	if output, err := cmd.CombinedOutput(); err != nil {
