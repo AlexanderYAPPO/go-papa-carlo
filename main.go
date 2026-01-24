@@ -6,8 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AlexanderYAPPO/go-papa-carlo/generate"
-	"github.com/AlexanderYAPPO/go-papa-carlo/parse"
+	"github.com/AlexanderYAPPO/go-papa-carlo/pipeline"
 )
 
 func main() {
@@ -19,12 +18,7 @@ func main() {
 	structName := os.Args[1]
 	pathToStruct := os.Args[2]
 
-	res := parse.Parse(structName, pathToStruct)
-	generatedCode := generate.Generate(res)
-
-	outputName := structName + "_builder_gen.go"
-	outputPath := filepath.Join(filepath.Dir(pathToStruct), outputName)
-	if err := os.WriteFile(outputPath, []byte(generatedCode), 0644); err != nil {
+	if err := pipeline.GenerateToFile(structName, pathToStruct); err != nil {
 		log.Fatal(err)
 	}
 }

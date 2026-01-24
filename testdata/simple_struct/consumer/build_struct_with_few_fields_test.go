@@ -1,9 +1,9 @@
 package consumer
 
 import (
-	"time"
 	"fmt"
 	"testing"
+	"time"
 
 	"example.com/fixture/pkg1"
 )
@@ -12,8 +12,8 @@ func TestBuilderWorks(t *testing.T) {
 	obj := pkg1.NewStructWithFewFieldsBuilder().
 		WithFieldInt(1).
 		WithFieldBool(true).
-		WithFieldDatetimeDatetime(time.Date(2026, 1, 17, 15, 42, 10, 0, time.UTC))
-		WithMapField(map[string]int{"two": 2, "three": 3}).
+		WithFieldDatetime(time.Date(2026, 1, 17, 15, 42, 10, 0, time.UTC)).
+		WithFieldMapField(map[string]int{"two": 2, "three": 3}).
 		Build()
 	fmt.Printf("%#v\n", obj)
 }
