@@ -5,13 +5,23 @@ import (
 	generateentity "github.com/AlexanderYAPPO/go-papa-carlo/generate/entity"
 )
 
+const (
+	_omitTag = "omit"
+)
+
 func buildFieldGenerationSteps(result baseentity.ParsingResult) []generateentity.FieldGenerationStep {
 	targetType := result.TargetTypeName
 	steps := []generateentity.FieldGenerationStep{
 		generateentity.Finalization{TargetType: targetType},
 	}
 
-	fields := result.Fields
+	fields := []baseentity.Field{}
+	for _, field := range result.Fields {
+		if field.FunctionalTags[_omitTag] {
+			continue
+		}
+		fields = append(fields, field)
+	}
 	if len(fields) == 0 {
 		return steps
 	}

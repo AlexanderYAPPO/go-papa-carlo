@@ -6,9 +6,15 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
+	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/AlexanderYAPPO/go-papa-carlo/entity"
+)
+
+const (
+	_papaCarloTagKey = "papa-carlo"
 )
 
 func Parse(targetStructName string, pathToFile string) entity.ParsingResult {
@@ -30,14 +36,42 @@ func Parse(targetStructName string, pathToFile string) entity.ParsingResult {
 func processField(field *ast.Field) []entity.Field {
 	fields := []entity.Field{}
 	typeName := getTypeName(field.Type)
+	tags := parseRelevantTags(field.Tag)
 	for _, name := range field.Names {
 		// iterate to cover multipla names on a single field:
 		// type S struct {
 		// 	A, B int
 		// }
-		fields = append(fields, entity.Field{Name: name.Name, Type: typeName})
+		fields = append(fields, entity.Field{Name: name.Name, Type: typeName, FunctionalTags: tags})
 	}
 	return fields
+}
+
+func parseRelevantTags(tag *ast.BasicLit) map[string]bool {
+	if tag == nil {
+		return nil
+	}
+	tagLiteral, err := strconv.Unquote(tag.Value)
+	if err != nil {
+		return nil
+	}
+	st := reflect.StructTag(tagLiteral)
+	raw, ok := st.Lookup(_papaCarloTagKey)
+	if !ok || raw == "" {
+		return nil
+	}
+	tags := map[string]bool{}
+	for _, tagName := range strings.Split(raw, ",") {
+		tagName = strings.TrimSpace(tagName)
+		if tagName == "" {
+			continue
+		}
+		tags[tagName] = true
+	}
+	if len(tags) == 0 {
+		return nil
+	}
+	return tags
 }
 
 func getTypeName(expr ast.Expr) string {

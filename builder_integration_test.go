@@ -24,6 +24,13 @@ func TestBuilderScenarios(t *testing.T) {
 			filepath.Join("testdata", "simple_struct", "consumer", "build_struct_with_few_fields_test.go"),
 		)
 	})
+	t.Run("struct_with_omitted_field", func(t *testing.T) {
+		runScenario(t,
+			filepath.Join("testdata", "omit_field", "fixture", "pkg1", "struct_with_omit.go"),
+			"StructWithOmittedField",
+			filepath.Join("testdata", "omit_field", "consumer", "build_struct_with_omit_test.go"),
+		)
+	})
 }
 
 func runScenario(t *testing.T, structPath, structName, usagePath string) {

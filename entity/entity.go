@@ -1,8 +1,8 @@
 package entity
 
 type ParsingResult struct {
-	Imports []Import
-	Fields  []Field
+	Imports        []Import
+	Fields         []Field
 	TargetTypeName string // TODO: not populated
 	PackageName    string
 }
@@ -14,6 +14,7 @@ type Import struct {
 }
 
 type Field struct {
-	Name string
-	Type string
+	Name           string
+	Type           string
+	FunctionalTags map[string]bool // tags related to papa-carlo builder
 }
