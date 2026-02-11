@@ -60,33 +60,62 @@ func (l LastField) Generate() []string {
 }
 
 type Finalization struct {
-	TargetType string
+	TargetType     string
+	OptionalFields []baseentity.Field
 }
 
 func (f Finalization) Generate() []string {
-	return []string{
+	res := []string{
 		"type FinalizationBuilder struct {",
 		fmt.Sprintf("\tt *%s", f.TargetType),
 		"}",
 		"",
+	}
+	for _, field := range f.OptionalFields {
+		methodName := withOptionalMethodName(field)
+		paramName := paramName(field)
+		res = append(res,
+			fmt.Sprintf("func (b FinalizationBuilder) %s(%s %s) FinalizationBuilder {", methodName, paramName, field.Type),
+			fmt.Sprintf("\tb.t.%s = %s", field.Name, paramName),
+			"\treturn FinalizationBuilder{t: b.t}",
+			"}",
+			"",
+		)
+	}
+	res = append(res,
 		fmt.Sprintf("func (b FinalizationBuilder) Build() %s {", f.TargetType),
 		"\treturn *b.t",
 		"}",
 		"",
-	}
+	)
+	return res
 }
 
-type MethodNew struct {
+type MethodNewToRequiredField struct {
 	TargetType string
 	FirstField baseentity.Field
 }
 
-func (m MethodNew) Generate() []string {
+func (m MethodNewToRequiredField) Generate() []string {
 	firstBuilderName := builderName(m.FirstField)
 	return []string{
 		fmt.Sprintf("func New%sBuilder() %s {", m.TargetType, firstBuilderName),
 		fmt.Sprintf("\temptyTarget := &%s{}", m.TargetType),
 		fmt.Sprintf("\treturn %s{t: emptyTarget}", firstBuilderName),
+		"}",
+		"",
+	}
+}
+
+type MethodNewToFinalization struct {
+	TargetType string
+}
+
+func (m MethodNewToFinalization) Generate() []string {
+	return []string{
+		fmt.Sprintf("func New%sBuilder() FinalizationBuilder {", m.TargetType),
+		fmt.Sprintf("\temptyTarget := &%s{}", m.TargetType),
+		"\treturn FinalizationBuilder{t: emptyTarget}",
 		"}",
 		"",
 	}
@@ -98,6 +127,10 @@ func builderName(field baseentity.Field) string {
 
 func withMethodName(field baseentity.Field) string {
 	return fmt.Sprintf("With%s", field.Name)
+}
+
+func withOptionalMethodName(field baseentity.Field) string {
+	return fmt.Sprintf("WithOptional%s", field.Name)
 }
 
 func paramName(field baseentity.Field) string {

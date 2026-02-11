@@ -31,6 +31,20 @@ func TestBuilderScenarios(t *testing.T) {
 			filepath.Join("testdata", "omit_field", "consumer", "build_struct_with_omit_test.go"),
 		)
 	})
+	t.Run("struct_with_optional_field", func(t *testing.T) {
+		runScenario(t,
+			filepath.Join("testdata", "optional_field", "fixture", "pkg1", "struct_with_optional.go"),
+			"StructWithOptionalField",
+			filepath.Join("testdata", "optional_field", "consumer", "build_struct_with_optional_test.go"),
+		)
+	})
+	t.Run("struct_with_only_optional_fields", func(t *testing.T) {
+		runScenario(t,
+			filepath.Join("testdata", "optional_only_field", "fixture", "pkg1", "struct_with_only_optional.go"),
+			"StructWithOnlyOptional",
+			filepath.Join("testdata", "optional_only_field", "consumer", "build_struct_with_only_optional_test.go"),
+		)
+	})
 }
 
 func runScenario(t *testing.T, structPath, structName, usagePath string) {
