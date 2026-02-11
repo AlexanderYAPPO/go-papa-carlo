@@ -56,3 +56,32 @@ myObj := NewABuilder(). // The result of this function gives you a struct with o
     WithField3(3).
     Build() // only this call gives you the final object.
 ```
+
+Features:
+---------
+
+**Omit** - omitting the field such that it won't be mentioned in the builder. Use tag `papa-carlo:omit`
+
+```
+type OmittableFields struct {
+	RequiredInt    int
+	OmmitableString string `papa-carlo:"omit"`
+}
+
+got := pkg1.NewOmittableFieldsBuilder().
+    WithRequiredInt(11).
+    Build()
+```
+
+**Optional** - mark the field as optional such that it's not required to be specified when the builder is used. The optional fields can be specified only at the end of the list (before Build() and after all required fields). Use tag `para-carlo:optional`. 
+```
+type OptionalFields struct {
+	RequiredInt    int
+	OptString string `papa-carlo:"optional"`
+}
+
+got := pkg1.NewStructWithOptionalFieldsBuilder().
+    WithRequiredInt(7).
+    WithOptionalOptString("hello").
+    Build()
+```
