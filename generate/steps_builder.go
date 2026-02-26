@@ -10,31 +10,36 @@ const (
 	_optionalTag = "optional"
 )
 
-func buildFieldGenerationSteps(result baseentity.ParsingResult) []generateentity.FieldGenerationStep {
-	targetType := result.TargetTypeName
+func buildFieldGenerationSteps(target baseentity.Target) []generateentity.FieldGenerationStep {
+	targetTypeName := target.Name
+	targetTypeRef := target.Reference
+	if targetTypeRef == "" {
+		targetTypeRef = targetTypeName
+	}
+	result := target.ParsingResult
 	requiredFields, optionalFields := splitFieldsByTags(result.Fields)
 
 	steps := []generateentity.FieldGenerationStep{
-		generateentity.Finalization{TargetType: targetType, OptionalFields: optionalFields},
+		generateentity.Finalization{TargetTypeRef: targetTypeRef, OptionalFields: optionalFields},
 	}
 
 	if len(requiredFields) == 0 {
-		steps = append(steps, generateentity.MethodNewToFinalization{TargetType: targetType})
+		steps = append(steps, generateentity.MethodNewToFinalization{TargetTypeName: targetTypeName, TargetTypeRef: targetTypeRef})
 		return steps
 	}
 
 	lastField := requiredFields[len(requiredFields)-1]
-	steps = append(steps, generateentity.LastField{Field: lastField, TargetType: targetType})
+	steps = append(steps, generateentity.LastField{Field: lastField, TargetTypeRef: targetTypeRef})
 
 	for i := len(requiredFields) - 2; i >= 0; i-- {
 		steps = append(steps, generateentity.FieldBuilderGivesFieldBuilder{
 			FieldToGenerateBuilderFor: requiredFields[i],
 			FieldToGive:               requiredFields[i+1],
-			TargetType:                targetType,
+			TargetTypeRef:             targetTypeRef,
 		})
 	}
 
-	steps = append(steps, generateentity.MethodNewToRequiredField{TargetType: targetType, FirstField: requiredFields[0]})
+	steps = append(steps, generateentity.MethodNewToRequiredField{TargetTypeName: targetTypeName, TargetTypeRef: targetTypeRef, FirstField: requiredFields[0]})
 	return steps
 }
 

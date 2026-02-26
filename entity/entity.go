@@ -1,10 +1,16 @@
 package entity
 
 type ParsingResult struct {
-	Imports        []Import
-	Fields         []Field
-	TargetTypeName string // TODO: not populated
-	PackageName    string
+	Imports     []Import
+	Fields      []Field
+	PackageName string
+}
+
+type Target struct {
+	Name          string
+	Reference     string
+	Import        Import
+	ParsingResult ParsingResult
 }
 
 type Import struct {

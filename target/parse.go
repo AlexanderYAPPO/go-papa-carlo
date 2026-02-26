@@ -1,4 +1,4 @@
-package parse
+package target
 
 import (
 	"fmt"
@@ -26,10 +26,9 @@ func Parse(targetStructName string, pathToFile string) entity.ParsingResult {
 	imports := captureImports(node)
 	allFields := captureFields(node, targetStructName)
 	return entity.ParsingResult{
-		Imports:        imports,
-		Fields:         allFields,
-		TargetTypeName: targetStructName,
-		PackageName:    node.Name.Name,
+		Imports:     imports,
+		Fields:      allFields,
+		PackageName: node.Name.Name,
 	}
 }
 

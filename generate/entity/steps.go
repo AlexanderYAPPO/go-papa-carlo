@@ -14,7 +14,7 @@ type FieldGenerationStep interface {
 type FieldBuilderGivesFieldBuilder struct {
 	FieldToGenerateBuilderFor baseentity.Field
 	FieldToGive               baseentity.Field
-	TargetType                string
+	TargetTypeRef             string
 }
 
 func (f FieldBuilderGivesFieldBuilder) Generate() []string {
@@ -25,7 +25,7 @@ func (f FieldBuilderGivesFieldBuilder) Generate() []string {
 
 	return []string{
 		fmt.Sprintf("type %s struct {", currentBuilderName),
-		fmt.Sprintf("\tt *%s", f.TargetType),
+		fmt.Sprintf("\tt *%s", f.TargetTypeRef),
 		"}",
 		"",
 		fmt.Sprintf("func (b %s) %s(%s %s) %s {", currentBuilderName, methodName, paramName, f.FieldToGenerateBuilderFor.Type, nextBuilderName),
@@ -37,8 +37,8 @@ func (f FieldBuilderGivesFieldBuilder) Generate() []string {
 }
 
 type LastField struct {
-	Field      baseentity.Field
-	TargetType string
+	Field         baseentity.Field
+	TargetTypeRef string
 }
 
 func (l LastField) Generate() []string {
@@ -48,7 +48,7 @@ func (l LastField) Generate() []string {
 
 	return []string{
 		fmt.Sprintf("type %s struct {", currentBuilderName),
-		fmt.Sprintf("\tt *%s", l.TargetType),
+		fmt.Sprintf("\tt *%s", l.TargetTypeRef),
 		"}",
 		"",
 		fmt.Sprintf("func (b %s) %s(%s %s) FinalizationBuilder {", currentBuilderName, methodName, paramName, l.Field.Type),
@@ -60,14 +60,14 @@ func (l LastField) Generate() []string {
 }
 
 type Finalization struct {
-	TargetType     string
+	TargetTypeRef  string
 	OptionalFields []baseentity.Field
 }
 
 func (f Finalization) Generate() []string {
 	res := []string{
 		"type FinalizationBuilder struct {",
-		fmt.Sprintf("\tt *%s", f.TargetType),
+		fmt.Sprintf("\tt *%s", f.TargetTypeRef),
 		"}",
 		"",
 	}
@@ -83,7 +83,7 @@ func (f Finalization) Generate() []string {
 		)
 	}
 	res = append(res,
-		fmt.Sprintf("func (b FinalizationBuilder) Build() %s {", f.TargetType),
+		fmt.Sprintf("func (b FinalizationBuilder) Build() %s {", f.TargetTypeRef),
 		"\treturn *b.t",
 		"}",
 		"",
@@ -92,15 +92,16 @@ func (f Finalization) Generate() []string {
 }
 
 type MethodNewToRequiredField struct {
-	TargetType string
-	FirstField baseentity.Field
+	TargetTypeName string
+	TargetTypeRef  string
+	FirstField     baseentity.Field
 }
 
 func (m MethodNewToRequiredField) Generate() []string {
 	firstBuilderName := builderName(m.FirstField)
 	return []string{
-		fmt.Sprintf("func New%sBuilder() %s {", m.TargetType, firstBuilderName),
-		fmt.Sprintf("\temptyTarget := &%s{}", m.TargetType),
+		fmt.Sprintf("func New%sBuilder() %s {", m.TargetTypeName, firstBuilderName),
+		fmt.Sprintf("\temptyTarget := &%s{}", m.TargetTypeRef),
 		fmt.Sprintf("\treturn %s{t: emptyTarget}", firstBuilderName),
 		"}",
 		"",
@@ -108,13 +109,14 @@ func (m MethodNewToRequiredField) Generate() []string {
 }
 
 type MethodNewToFinalization struct {
-	TargetType string
+	TargetTypeName string
+	TargetTypeRef  string
 }
 
 func (m MethodNewToFinalization) Generate() []string {
 	return []string{
-		fmt.Sprintf("func New%sBuilder() FinalizationBuilder {", m.TargetType),
-		fmt.Sprintf("\temptyTarget := &%s{}", m.TargetType),
+		fmt.Sprintf("func New%sBuilder() FinalizationBuilder {", m.TargetTypeName),
+		fmt.Sprintf("\temptyTarget := &%s{}", m.TargetTypeRef),
 		"\treturn FinalizationBuilder{t: emptyTarget}",
 		"}",
 		"",

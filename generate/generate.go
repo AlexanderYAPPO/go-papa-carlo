@@ -12,15 +12,20 @@ const (
 )
 
 // Generate creates source code for builders based on the parsing result.
-func Generate(result entity.ParsingResult) string {
+func Generate(target entity.Target) string {
 	codeLines := []string{_doNotEditComment}
+	result := target.ParsingResult
 	if result.PackageName != "" {
 		codeLines = append(codeLines, fmt.Sprintf("package %s", result.PackageName), "")
 	}
-	if len(result.Imports) > 0 {
-		codeLines = append(codeLines, generateImports(result.Imports)...)
+	imports := append([]entity.Import{}, result.Imports...)
+	if target.Import.Path != "" {
+		imports = append(imports, target.Import)
 	}
-	steps := buildFieldGenerationSteps(result)
+	if len(imports) > 0 {
+		codeLines = append(codeLines, generateImports(imports)...)
+	}
+	steps := buildFieldGenerationSteps(target)
 	if len(steps) > 0 && len(codeLines) > 0 {
 		codeLines = append(codeLines, "")
 	}

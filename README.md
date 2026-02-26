@@ -3,6 +3,16 @@ go-papa-carlo
 
 Generate builder-style Go code from a struct definition. The library generates a chained builder with `WithX(...)` methods and a final `Build(). The main difference of this builder library from most other builders for go is that it ensures strong field requirements. 
 
+CLI Usage:
+----------
+
+```bash
+go-papa-carlo <struct_name> <path_to_struct> [output_path]
+```
+
+If `output_path` is omitted, generated code is written next to the input struct file as `<struct_name>_builder_gen.go`.
+If `output_path` points to another package directory, generated builders stay in that package and reference the target struct from its original package.
+
 Problem:
 --------
 In Go, when you need to create a struct, there's no nice way of making required parameters. If you create a struct by initializing an object, Go doesn't require you to specify all fields. Therefore when you add a new field, you cannot make the compiler fail if there are struct initializations that don't specify this field:

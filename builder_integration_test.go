@@ -22,6 +22,7 @@ func TestBuilderScenarios(t *testing.T) {
 			filepath.Join("testdata", "simple_struct", "fixture", "pkg1", "struct_with_few_fields.go"),
 			"StructWithFewFields",
 			filepath.Join("testdata", "simple_struct", "consumer", "build_struct_with_few_fields_test.go"),
+			"",
 		)
 	})
 	t.Run("struct_with_omitted_field", func(t *testing.T) {
@@ -29,6 +30,7 @@ func TestBuilderScenarios(t *testing.T) {
 			filepath.Join("testdata", "omit_field", "fixture", "pkg1", "struct_with_omit.go"),
 			"StructWithOmittedField",
 			filepath.Join("testdata", "omit_field", "consumer", "build_struct_with_omit_test.go"),
+			"",
 		)
 	})
 	t.Run("struct_with_optional_field", func(t *testing.T) {
@@ -36,6 +38,7 @@ func TestBuilderScenarios(t *testing.T) {
 			filepath.Join("testdata", "optional_field", "fixture", "pkg1", "struct_with_optional.go"),
 			"StructWithOptionalField",
 			filepath.Join("testdata", "optional_field", "consumer", "build_struct_with_optional_test.go"),
+			"",
 		)
 	})
 	t.Run("struct_with_only_optional_fields", func(t *testing.T) {
@@ -43,16 +46,46 @@ func TestBuilderScenarios(t *testing.T) {
 			filepath.Join("testdata", "optional_only_field", "fixture", "pkg1", "struct_with_only_optional.go"),
 			"StructWithOnlyOptional",
 			filepath.Join("testdata", "optional_only_field", "consumer", "build_struct_with_only_optional_test.go"),
+			"",
+		)
+	})
+	t.Run("struct_with_custom_output_path", func(t *testing.T) {
+		runScenarioWithCustomOutputPackage(t,
+			filepath.Join("testdata", "custom_output_path", "fixture", "pkg1", "struct_with_few_fields.go"),
+			"StructWithFewFields",
+			filepath.Join("testdata", "custom_output_path", "consumer", "build_struct_with_custom_output_path_test.go"),
 		)
 	})
 }
 
-func runScenario(t *testing.T, structPath, structName, usagePath string) {
+func runScenario(t *testing.T, structPath, structName, usagePath, outputFileName string) {
 	t.Helper()
 	tempDir := createPackage(t)
 
 	structDst := copyGoFile(t, tempDir, structPath)
-	if err := pipeline.GenerateToFile(structName, structDst); err != nil {
+	outputPath := filepath.Join(filepath.Dir(structDst), structName+"_builder_gen.go")
+	if outputFileName != "" {
+		outputPath = filepath.Join(filepath.Dir(structDst), outputFileName)
+	}
+	if err := pipeline.GenerateToFile(structName, structDst, outputPath); err != nil {
+		t.Fatalf("generate builder: %v", err)
+	}
+
+	copyGoFile(t, tempDir, usagePath)
+	runGoTest(t, tempDir)
+}
+
+func runScenarioWithCustomOutputPackage(t *testing.T, sourceStructPath, structName, usagePath string) {
+	t.Helper()
+	tempDir := createPackage(t)
+
+	sourceStructDst := copyGoFile(t, tempDir, sourceStructPath)
+	outputDir := filepath.Join(tempDir, "builders")
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		t.Fatalf("create custom output dir: %v", err)
+	}
+	outputPath := filepath.Join(outputDir, "custom_builder_gen.go")
+	if err := pipeline.GenerateToFile(structName, sourceStructDst, outputPath); err != nil {
 		t.Fatalf("generate builder: %v", err)
 	}
 
