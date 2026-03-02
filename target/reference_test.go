@@ -1,6 +1,7 @@
 package target
 
 import (
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -12,11 +13,13 @@ func TestCreateTarget(t *testing.T) {
 	structAPath := filepath.Join("..", "testdata", "reference", "success", "struct_a.go")
 	structBPath := filepath.Join("..", "testdata", "reference", "success", "pkg", "struct_b.go")
 	structCPath := filepath.Join("..", "testdata", "reference", "success", "pkg", "sub_pkg", "struct_c.go")
+	structBadPath := filepath.Join("..", "testdata", "reference", "bad_mod_file", "struct_bad.go")
 
 	outputAPath := filepath.Join("..", "testdata", "reference", "success", "a_builder_gen.go")
 	outputABuildersPath := filepath.Join("..", "testdata", "reference", "success", "builders", "a_builder_gen.go")
 	outputBPath := filepath.Join("..", "testdata", "reference", "success", "builders", "b_builder_gen.go")
 	outputCPath := filepath.Join("..", "testdata", "reference", "success", "builders", "c_builder_gen.go")
+	outputBadPath := filepath.Join("..", "testdata", "reference", "bad_mod_file", "builders", "bad_builder_gen.go")
 
 	testCases := []struct {
 		name          string
@@ -125,6 +128,19 @@ func TestCreateTarget(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+		},
+		{
+			name:       "malformed go.mod returns module directive not found error",
+			targetName: "Bad",
+			structPath: structBadPath,
+			outputPath: outputBadPath,
+			parsingResult: entity.ParsingResult{
+				Imports:     []entity.Import{},
+				Fields:      []entity.Field{{Name: "Value", Type: "int"}},
+				PackageName: "bad_mod_file",
+			},
+			want:    entity.Target{},
+			wantErr: errors.New("module directive not found in go.mod"),
 		},
 	}
 
