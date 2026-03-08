@@ -2,6 +2,7 @@ package target
 
 import (
 	"errors"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -151,4 +152,33 @@ func TestCreateTarget(t *testing.T) {
 			assert.Equal(t, tc.wantErr, err)
 		})
 	}
+}
+
+// TestCreateTarget_NoGoModReturnsError uses a TempDir outside this repository
+// so walking parent directories cannot accidentally find the repo root go.mod.
+// The output file is placed in a different directory to avoid CreateTarget's
+// same-directory fast path and force findModuleInfo to execute.
+func TestCreateTarget_NoGoModReturnsError(t *testing.T) {
+	tempDir := t.TempDir()
+
+	structPath := filepath.Join(tempDir, "pkg", "struct_no_mod.go")
+	outputPath := filepath.Join(tempDir, "builders", "builder_gen.go")
+
+	assert.NoError(t, os.MkdirAll(filepath.Dir(structPath), 0o755))
+	assert.NoError(t, os.MkdirAll(filepath.Dir(outputPath), 0o755))
+	assert.NoError(t, os.WriteFile(structPath, []byte("package pkg\ntype NoMod struct{}\n"), 0o644))
+
+	got, err := CreateTarget(
+		entity.ParsingResult{
+			Imports:     []entity.Import{},
+			Fields:      []entity.Field{{Name: "Value", Type: "string"}},
+			PackageName: "pkg",
+		},
+		"NoMod",
+		structPath,
+		outputPath,
+	)
+
+	assert.Equal(t, entity.Target{}, got)
+	assert.EqualError(t, err, "unable to resolve module path from go.mod")
 }
