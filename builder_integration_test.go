@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/AlexanderYAPPO/go-papa-carlo/pipeline"
@@ -56,7 +57,23 @@ func TestBuilderScenarios(t *testing.T) {
 			filepath.Join("testdata", "custom_output_path", "consumer", "build_struct_with_custom_output_path_test.go"),
 		)
 	})
-}
+	t.Run("struct_with_private_fields", func(t *testing.T) {
+		runScenario(t,
+			filepath.Join("testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
+			"StructWithPrivateFieldsThatWorks",
+			filepath.Join("testdata", "struct_with_private_fields", "consumer", "build_struct_private_fields.go"),
+			"",
+		)
+	})
+		t.Run("struct_with_private_fields_error", func(t *testing.T) {
+			runScenarioWithExpectedError(t,
+				filepath.Join("testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
+				"StructWithPrivateFieldsThatErrors",
+				"",
+				"field privateField is a private field and cannot be used in builder generation unless omitted with tag papa-carlo:\"omit\"",
+			)
+		})
+	}
 
 func runScenario(t *testing.T, structPath, structName, usagePath, outputFileName string) {
 	t.Helper()
@@ -91,6 +108,25 @@ func runScenarioWithCustomOutputPackage(t *testing.T, sourceStructPath, structNa
 
 	copyGoFile(t, tempDir, usagePath)
 	runGoTest(t, tempDir)
+}
+
+func runScenarioWithExpectedError(t *testing.T, structPath, structName, outputFileName, expectedErrMsg string) {
+	t.Helper()
+	tempDir := createPackage(t)
+
+	structDst := copyGoFile(t, tempDir, structPath)
+	outputPath := filepath.Join(filepath.Dir(structDst), structName+"_builder_gen.go")
+	if outputFileName != "" {
+		outputPath = filepath.Join(filepath.Dir(structDst), outputFileName)
+	}
+
+	err := pipeline.GenerateToFile(structName, structDst, outputPath)
+	if err == nil {
+		t.Fatalf("expected error containing %q, got nil", expectedErrMsg)
+	}
+	if !strings.Contains(err.Error(), expectedErrMsg) {
+		t.Fatalf("expected error containing %q, got %q", expectedErrMsg, err.Error())
+	}
 }
 
 func createPackage(t *testing.T) string {

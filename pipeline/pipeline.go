@@ -14,7 +14,10 @@ func GenerateToFile(structName, pathToStruct, outputPath string) error {
 	if err != nil {
 		return err
 	}
-	generatedCode := generate.Generate(adaptedTarget)
+	generatedCode, err := generate.Generate(adaptedTarget)
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(filepath.Dir(outputPath), 0755); err != nil {
 		return err
 	}

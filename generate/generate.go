@@ -12,7 +12,7 @@ const (
 )
 
 // Generate creates source code for builders based on the parsing result.
-func Generate(target entity.Target) string {
+func Generate(target entity.Target) (string, error) {
 	codeLines := []string{_doNotEditComment}
 	result := target.ParsingResult
 	if result.PackageName != "" {
@@ -25,7 +25,10 @@ func Generate(target entity.Target) string {
 	if len(imports) > 0 {
 		codeLines = append(codeLines, generateImports(imports)...)
 	}
-	steps := buildFieldGenerationSteps(target)
+	steps, err := buildFieldGenerationSteps(target)
+	if err != nil {
+		return "", err
+	}
 	if len(steps) > 0 && len(codeLines) > 0 {
 		codeLines = append(codeLines, "")
 	}
@@ -34,7 +37,7 @@ func Generate(target entity.Target) string {
 		codeLines = append(codeLines, step.Generate()...)
 	}
 
-	return strings.Join(codeLines, "\n")
+	return strings.Join(codeLines, "\n"), nil
 }
 
 func generateImports(imports []entity.Import) []string {
