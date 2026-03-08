@@ -9,6 +9,7 @@ import (
 	"example.com/fixture/pkg1"
 )
 
+// TestBuilderWorks tests that the builder works for a simple  and basic struct with few fields.
 func TestBuilderWorks(t *testing.T) {
 	got := pkg1.NewStructWithFewFieldsBuilder().
 		WithFieldInt(1).

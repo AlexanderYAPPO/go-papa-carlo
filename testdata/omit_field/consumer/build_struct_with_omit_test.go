@@ -8,6 +8,7 @@ import (
 	"example.com/fixture/pkg1"
 )
 
+// TestBuilderOmitsTaggedField tests that the builder works for a struct with `papa-carlo:"omit"` tag.
 func TestBuilderOmitsTaggedField(t *testing.T) {
 	got := pkg1.NewStructWithOmittedFieldBuilder().
 		WithRequiredInt(11).

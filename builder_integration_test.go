@@ -44,9 +44,9 @@ func TestBuilderScenarios(t *testing.T) {
 	})
 	t.Run("struct_with_only_optional_fields", func(t *testing.T) {
 		runScenario(t,
-			filepath.Join("testdata", "optional_only_field", "fixture", "pkg1", "struct_with_only_optional.go"),
+			filepath.Join("testdata", "optional_field", "fixture", "pkg1", "struct_with_only_optional.go"),
 			"StructWithOnlyOptional",
-			filepath.Join("testdata", "optional_only_field", "consumer", "build_struct_with_only_optional_test.go"),
+			filepath.Join("testdata", "optional_field", "consumer", "build_struct_with_only_optional_test.go"),
 			"",
 		)
 	})
@@ -65,15 +65,15 @@ func TestBuilderScenarios(t *testing.T) {
 			"",
 		)
 	})
-		t.Run("struct_with_private_fields_error", func(t *testing.T) {
-			runScenarioWithExpectedError(t,
-				filepath.Join("testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
-				"StructWithPrivateFieldsThatErrors",
-				"",
-				"field privateField is a private field and cannot be used in builder generation unless omitted with tag papa-carlo:\"omit\"",
-			)
-		})
-	}
+	t.Run("struct_with_private_fields_error", func(t *testing.T) {
+		runScenarioWithExpectedError(t,
+			filepath.Join("testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
+			"StructWithPrivateFieldsThatErrors",
+			"",
+			"field privateField is a private field and cannot be used in builder generation unless omitted with tag papa-carlo:\"omit\"",
+		)
+	})
+}
 
 func runScenario(t *testing.T, structPath, structName, usagePath, outputFileName string) {
 	t.Helper()

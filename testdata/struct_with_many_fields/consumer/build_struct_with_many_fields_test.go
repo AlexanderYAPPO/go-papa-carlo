@@ -12,6 +12,8 @@ import (
 	"example.com/fixture/pkg3"
 )
 
+// TestBuilderWorks tests that the builder works for a struct with many fields 
+// and it's expected that it covers all supported field types.
 func TestBuilderWorks(t *testing.T) {
 	channel := make(chan int)
 	channelInSource := make(chan int)

@@ -8,6 +8,8 @@ import (
 	"example.com/fixture/pkg1"
 )
 
+// TestBuilderOptionalFieldCanBeSkipped tests that the builder works for a struct with optional fields
+// when none of the optional fields are set.
 func TestBuilderOptionalFieldCanBeSkipped(t *testing.T) {
 	got := pkg1.NewStructWithOptionalFieldBuilder().
 		WithRequiredInt(7).
@@ -20,6 +22,8 @@ func TestBuilderOptionalFieldCanBeSkipped(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
+// TestBuilderOptionalFieldCanBeSet tests that the builder works for a struct with optional fields
+// when some of the optional fields are set.
 func TestBuilderOptionalFieldCanBeSet(t *testing.T) {
 	got := pkg1.NewStructWithOptionalFieldBuilder().
 		WithRequiredInt(7).

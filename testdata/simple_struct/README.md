@@ -1,1 +1,0 @@
-This scenario tests a simple and small struct without any nesting. No usages to local packages.

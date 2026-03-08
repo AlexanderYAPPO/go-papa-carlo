@@ -10,6 +10,7 @@ import (
 	targetpkg "example.com/fixture/pkg1"
 )
 
+// TestBuilderWorksFromCustomOutputPath tests that the builder works for a custom output path.
 func TestBuilderWorksFromCustomOutputPath(t *testing.T) {
 	got := builderpkg.NewStructWithFewFieldsBuilder().
 		WithFieldInt(1).
