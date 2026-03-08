@@ -18,7 +18,7 @@ require github.com/stretchr/testify v1.9.0
 `
 
 func TestBuilderScenarios(t *testing.T) {
-	t.Run("struct_with_few_fields", func(t *testing.T) {
+	t.Run("simple struct with few fields", func(t *testing.T) {
 		runScenario(t,
 			filepath.Join("testdata", "simple_struct", "fixture", "pkg1", "struct_with_few_fields.go"),
 			"StructWithFewFields",
@@ -26,7 +26,7 @@ func TestBuilderScenarios(t *testing.T) {
 			"",
 		)
 	})
-	t.Run("struct_with_omitted_field", func(t *testing.T) {
+	t.Run("omit fields by omit tag", func(t *testing.T) {
 		runScenario(t,
 			filepath.Join("testdata", "omit_field", "fixture", "pkg1", "struct_with_omit.go"),
 			"StructWithOmittedField",
@@ -34,7 +34,7 @@ func TestBuilderScenarios(t *testing.T) {
 			"",
 		)
 	})
-	t.Run("struct_with_optional_field", func(t *testing.T) {
+	t.Run("struct where some of the fields are optional", func(t *testing.T) {
 		runScenario(t,
 			filepath.Join("testdata", "optional_field", "fixture", "pkg1", "struct_with_optional.go"),
 			"StructWithOptionalField",
@@ -42,7 +42,7 @@ func TestBuilderScenarios(t *testing.T) {
 			"",
 		)
 	})
-	t.Run("struct_with_only_optional_fields", func(t *testing.T) {
+	t.Run("struct where all fields are optional", func(t *testing.T) {
 		runScenario(t,
 			filepath.Join("testdata", "optional_field", "fixture", "pkg1", "struct_with_only_optional.go"),
 			"StructWithOnlyOptional",
@@ -50,14 +50,14 @@ func TestBuilderScenarios(t *testing.T) {
 			"",
 		)
 	})
-	t.Run("struct_with_custom_output_path", func(t *testing.T) {
+	t.Run("generate a builder in a different from source package", func(t *testing.T) {
 		runScenarioWithCustomOutputPackage(t,
 			filepath.Join("testdata", "custom_output_path", "fixture", "pkg1", "struct_with_few_fields.go"),
 			"StructWithFewFields",
 			filepath.Join("testdata", "custom_output_path", "consumer", "build_struct_with_custom_output_path_test.go"),
 		)
 	})
-	t.Run("struct_with_private_fields", func(t *testing.T) {
+	t.Run("struct with omitted private fields", func(t *testing.T) {
 		runScenario(t,
 			filepath.Join("testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
 			"StructWithPrivateFieldsThatWorks",
@@ -65,7 +65,7 @@ func TestBuilderScenarios(t *testing.T) {
 			"",
 		)
 	})
-	t.Run("struct_with_private_fields_error", func(t *testing.T) {
+	t.Run("throw an error when a struct has not omitted private fields", func(t *testing.T) {
 		runScenarioWithExpectedError(t,
 			filepath.Join("testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
 			"StructWithPrivateFieldsThatErrors",
