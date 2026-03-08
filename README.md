@@ -13,6 +13,35 @@ go-papa-carlo <struct_name> <path_to_struct> [output_path]
 If `output_path` is omitted, generated code is written next to the input struct file as `<struct_name>_builder_gen.go`.
 If `output_path` points to another package directory, generated builders stay in that package and reference the target struct from its original package.
 
+Testing:
+--------
+
+Run all tests from the repository root with:
+
+```bash
+go test ./...
+```
+
+Coverage:
+---------
+
+For a quick per-package coverage view, run:
+
+```bash
+go test -cover ./...
+```
+
+For coverage that reflects the real behavior of this project, run:
+
+```bash
+go test -coverpkg=./... -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
+
+The `-coverpkg=./...` flag is required because the main integration test in `builder_integration_test.go` lives in the root package, but it exercises most of the implementation through imported packages such as `pipeline`, `generate`, and `target`. Without `-coverpkg`, Go records coverage only for the package currently under test, so those imported packages incorrectly appear as uncovered even though the integration test is using them.
+
+This is slightly unorthodox, but it matches how the project is structured: the integration test validates generated code end-to-end while calling into other packages from the top-level test. Note that the nested `go test` executed inside the temporary fixture module is a separate process, so its own coverage is not merged back into the repository coverage report. The outer `go test -coverpkg=./...` command is therefore the best way to measure meaningful coverage for this codebase.
+
 Problem:
 --------
 In Go, when you need to create a struct, there's no nice way of making required parameters. If you create a struct by initializing an object, Go doesn't require you to specify all fields. Therefore when you add a new field, you cannot make the compiler fail if there are struct initializations that don't specify this field:
