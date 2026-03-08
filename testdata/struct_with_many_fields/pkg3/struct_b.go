@@ -1,5 +1,5 @@
 package pkg3
 
-type ClassB struct {
+type StructB struct {
 	FieldStr string
 }
