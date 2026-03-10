@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"log"
 	"reflect"
 	"strconv"
@@ -34,14 +35,19 @@ func Parse(targetStructName string, pathToFile string) entity.ParsingResult {
 
 func processField(field *ast.Field) []entity.Field {
 	fields := []entity.Field{}
-	typeName := getTypeName(field.Type)
+	typeInfo := getTypeInfo(field.Type)
 	tags := parseRelevantTags(field.Tag)
 	for _, name := range field.Names {
 		// iterate to cover multipla names on a single field:
 		// type S struct {
 		// 	A, B int
 		// }
-		fields = append(fields, entity.Field{Name: name.Name, Type: typeName, FunctionalTags: tags})
+		fields = append(fields, entity.Field{
+			Name:               name.Name,
+			Type:               typeInfo.Name,
+			UsesUnexportedType: typeInfo.UsesUnexportedType,
+			FunctionalTags:     tags,
+		})
 	}
 	return fields
 }
@@ -73,22 +79,40 @@ func parseRelevantTags(tag *ast.BasicLit) map[string]bool {
 	return tags
 }
 
-func getTypeName(expr ast.Expr) string {
-	var typeName string
+type parsedTypeInfo struct {
+	Name               string
+	UsesUnexportedType bool
+}
+
+func getTypeInfo(expr ast.Expr) parsedTypeInfo {
 	switch t := expr.(type) {
 	case *ast.Ident:
-		typeName = t.Name
+		return parsedTypeInfo{
+			Name:               t.Name,
+			UsesUnexportedType: !isPredeclaredTypeName(t.Name) && !token.IsExported(t.Name),
+		}
 
 	case *ast.ArrayType:
-		typeName = "[]" + getTypeName(t.Elt)
+		elt := getTypeInfo(t.Elt)
+		return parsedTypeInfo{
+			Name:               "[]" + elt.Name,
+			UsesUnexportedType: elt.UsesUnexportedType,
+		}
 
 	case *ast.MapType:
-		keyType := getTypeName(t.Key)
-		valType := getTypeName(t.Value)
-		typeName = fmt.Sprintf("map[%s]%s", keyType, valType)
+		keyType := getTypeInfo(t.Key)
+		valType := getTypeInfo(t.Value)
+		return parsedTypeInfo{
+			Name:               fmt.Sprintf("map[%s]%s", keyType.Name, valType.Name),
+			UsesUnexportedType: keyType.UsesUnexportedType || valType.UsesUnexportedType,
+		}
 
 	case *ast.StarExpr:
-		typeName = "*" + getTypeName(t.X)
+		x := getTypeInfo(t.X)
+		return parsedTypeInfo{
+			Name:               "*" + x.Name,
+			UsesUnexportedType: x.UsesUnexportedType,
+		}
 
 	case *ast.SelectorExpr:
 		// This handles pkg.Type or alias.Type
@@ -96,7 +120,10 @@ func getTypeName(expr ast.Expr) string {
 		if ident, ok := t.X.(*ast.Ident); ok {
 			pkgName = ident.Name
 		}
-		typeName = pkgName + "." + t.Sel.Name
+		return parsedTypeInfo{
+			Name:               pkgName + "." + t.Sel.Name,
+			UsesUnexportedType: !token.IsExported(t.Sel.Name),
+		}
 
 	case *ast.ChanType:
 		direction := "chan"
@@ -106,32 +133,49 @@ func getTypeName(expr ast.Expr) string {
 		case ast.SEND:
 			direction = "chan<-"
 		}
-		typeName = direction + " " + getTypeName(t.Value)
+		valueType := getTypeInfo(t.Value)
+		return parsedTypeInfo{
+			Name:               direction + " " + valueType.Name,
+			UsesUnexportedType: valueType.UsesUnexportedType,
+		}
 
 	case *ast.FuncType:
 		params := []string{}
+		usesUnexportedType := false
 		if t.Params != nil {
 			for _, p := range t.Params.List {
-				params = append(params, getTypeName(p.Type))
+				paramType := getTypeInfo(p.Type)
+				params = append(params, paramType.Name)
+				usesUnexportedType = usesUnexportedType || paramType.UsesUnexportedType
 			}
 		}
 
 		results := []string{}
 		if t.Results != nil {
 			for _, r := range t.Results.List {
-				results = append(results, getTypeName(r.Type))
+				resultType := getTypeInfo(r.Type)
+				results = append(results, resultType.Name)
+				usesUnexportedType = usesUnexportedType || resultType.UsesUnexportedType
 			}
 		}
 
-		typeName = fmt.Sprintf("func(%s) (%s)",
-			strings.Join(params, ", "),
-			strings.Join(results, ", "))
+		return parsedTypeInfo{
+			Name: fmt.Sprintf("func(%s) (%s)",
+				strings.Join(params, ", "),
+				strings.Join(results, ", ")),
+			UsesUnexportedType: usesUnexportedType,
+		}
 
 	case *ast.InterfaceType:
-		return "interface{}"
+		return parsedTypeInfo{Name: "interface{}"}
 
 	}
-	return typeName
+	return parsedTypeInfo{}
+}
+
+func isPredeclaredTypeName(name string) bool {
+	_, ok := types.Universe.Lookup(name).(*types.TypeName)
+	return ok
 }
 
 func captureFields(node *ast.File, targetStructName string) []entity.Field {

@@ -73,6 +73,14 @@ func TestBuilderScenarios(t *testing.T) {
 			"field privateField is a private field and cannot be used in builder generation unless omitted with tag papa-carlo:\"omit\"",
 		)
 	})
+	t.Run("throw an error when a struct uses an unexported type", func(t *testing.T) {
+		runScenarioWithExpectedError(t,
+			filepath.Join("testdata", "struct_with_unexported_types", "fixture", "pkg", "struct_with_unexported_types.go"),
+			"StructWithUnexportedType",
+			"",
+			"field PublicField uses a type containing unexported identifiers: privateType",
+		)
+	})
 }
 
 func runScenario(t *testing.T, structPath, structName, usagePath, outputFileName string) {

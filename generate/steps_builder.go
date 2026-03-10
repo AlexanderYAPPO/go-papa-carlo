@@ -21,6 +21,9 @@ func buildFieldGenerationSteps(target baseentity.Target) ([]generateentity.Field
 	}
 	result := target.ParsingResult
 	requiredFields, optionalFields := splitFieldsByTags(result.Fields)
+	if err := validateFieldTypes(append(append([]baseentity.Field{}, requiredFields...), optionalFields...)); err != nil {
+		return nil, err
+	}
 
 	steps := []generateentity.FieldGenerationStep{
 		generateentity.Finalization{TargetTypeRef: targetTypeRef, OptionalFields: optionalFields},
@@ -87,4 +90,14 @@ func validateRequiredField(field baseentity.Field) error {
 		return nil
 	}
 	return errors.New("field " + field.Name + " is a private field and cannot be used in builder generation unless omitted with tag papa-carlo:\"omit\"")
+}
+
+func validateFieldTypes(fields []baseentity.Field) error {
+	for _, field := range fields {
+		if !field.UsesUnexportedType {
+			continue
+		}
+		return errors.New("field " + field.Name + " uses a type containing unexported identifiers: " + field.Type)
+	}
+	return nil
 }

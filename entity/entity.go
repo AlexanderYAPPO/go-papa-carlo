@@ -20,7 +20,8 @@ type Import struct {
 }
 
 type Field struct {
-	Name           string
-	Type           string
-	FunctionalTags map[string]bool // tags related to papa-carlo builder
+	Name               string
+	Type               string
+	UsesUnexportedType bool
+	FunctionalTags     map[string]bool // tags related to papa-carlo builder
 }
