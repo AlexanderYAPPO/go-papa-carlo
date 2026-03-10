@@ -169,6 +169,20 @@ func getTypeInfo(expr ast.Expr) parsedTypeInfo {
 	case *ast.InterfaceType:
 		return parsedTypeInfo{Name: "interface{}"}
 
+	case *ast.Ellipsis:
+		elt := getTypeInfo(t.Elt)
+		return parsedTypeInfo{
+			Name:               "..." + elt.Name,
+			UsesUnexportedType: elt.UsesUnexportedType,
+		}
+
+	case *ast.ParenExpr:
+		x := getTypeInfo(t.X)
+		return parsedTypeInfo{
+			Name:               "(" + x.Name + ")",
+			UsesUnexportedType: x.UsesUnexportedType,
+		}
+
 	}
 	return parsedTypeInfo{}
 }

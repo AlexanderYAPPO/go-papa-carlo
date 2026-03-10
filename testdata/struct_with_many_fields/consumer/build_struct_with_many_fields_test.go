@@ -12,7 +12,7 @@ import (
 	"example.com/fixture/pkg3"
 )
 
-// TestBuilderWorks tests that the builder works for a struct with many fields 
+// TestBuilderWorks tests that the builder works for a struct with many fields
 // and it's expected that it covers all supported field types.
 func TestBuilderWorks(t *testing.T) {
 	channel := make(chan int)
@@ -27,9 +27,17 @@ func TestBuilderWorks(t *testing.T) {
 	lambdaFunctionAliasMult := func(i int, s string) (int, error) {
 		return i * len(s), nil
 	}
+	variadicFunctionSum := func(values ...int) (int, error) {
+		sum := 0
+		for _, value := range values {
+			sum += value
+		}
+		return sum, nil
+	}
 
 	expectedErr := errors.New("boom")
 	expectedDatetime := time.Date(2026, 1, 17, 15, 42, 10, 0, time.UTC)
+	expectedParenthesizedStruct := pkg1.StructB{FieldOne: 30}
 
 	got := pkg1.NewStructABuilder().
 		WithStringField("hello").
@@ -52,9 +60,11 @@ func TestBuilderWorks(t *testing.T) {
 		WithLambdaFunction(lambdaFunctionSum).
 		WithErr(expectedErr).
 		WithLambdaFunctionAlias(lambdaFunctionAliasMult).
+		WithVariadicFunction(variadicFunctionSum).
 		WithInterface([]string{"a", "b"}).
 		WithDefinedInterface(map[string]string{"kind": "demo"}).
 		WithDatetime(expectedDatetime).
+		WithParenthesizedStruct(expectedParenthesizedStruct).
 		Build()
 
 	want := pkg1.StructA{
@@ -78,9 +88,11 @@ func TestBuilderWorks(t *testing.T) {
 		LambdaFunction:      nil,
 		Err:                 expectedErr,
 		LambdaFunctionAlias: nil,
+		VariadicFunction:    nil,
 		Interface:           []string{"a", "b"},
 		DefinedInterface:    map[string]string{"kind": "demo"},
 		Datetime:            expectedDatetime,
+		ParenthesizedStruct: expectedParenthesizedStruct,
 	}
 
 	gotComparable := got
@@ -88,6 +100,7 @@ func TestBuilderWorks(t *testing.T) {
 	// so we set them to nil to make the comparison work and test the functions separately later.
 	gotComparable.LambdaFunction = nil
 	gotComparable.LambdaFunctionAlias = nil
+	gotComparable.VariadicFunction = nil
 
 	assert.Equal(t, want, gotComparable)
 
@@ -100,4 +113,8 @@ func TestBuilderWorks(t *testing.T) {
 	lambdaAliasResult, lambdaAliasErr := got.LambdaFunctionAlias(5, "abc")
 	assert.NoError(t, lambdaAliasErr)
 	assert.Equal(t, 15, lambdaAliasResult)
+
+	variadicResult, variadicErr := got.VariadicFunction(1, 2, 3, 4)
+	assert.NoError(t, variadicErr)
+	assert.Equal(t, 10, variadicResult)
 }

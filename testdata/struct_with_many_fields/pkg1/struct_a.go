@@ -25,9 +25,11 @@ type StructA struct {
 	LambdaFunction      func(int, string) (int, error)
 	Err                 error
 	LambdaFunctionAlias LambdaFunction
+	VariadicFunction    func(...int) (int, error)
 	Interface           interface{}
 	DefinedInterface    InterfaceA
 	Datetime            time.Time
+	ParenthesizedStruct (StructB)
 }
 
 type InterfaceA interface{}
