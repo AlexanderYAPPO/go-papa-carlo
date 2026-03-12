@@ -90,6 +90,17 @@ func TestBuilderScenarios(t *testing.T) {
 			"requested struct is not found in the file",
 		)
 	})
+
+	t.Run("throw an error if the source file doesn't exist", func(t *testing.T) {
+		expectedErrMsg := "open /file/that/doesnt/exist.go: no such file or directory"
+		err := pipeline.GenerateToFile("FakeStructName", "/file/that/doesnt/exist.go", "")
+		if err == nil {
+			t.Fatalf("expected error containing %q, got nil", expectedErrMsg)
+		}
+		if !strings.Contains(err.Error(), expectedErrMsg) {
+			t.Fatalf("expected error containing %q, got %q", expectedErrMsg, err.Error())
+		}
+	})
 }
 
 func runScenario(t *testing.T, structPath, structName, usagePath, outputFileName string) {
