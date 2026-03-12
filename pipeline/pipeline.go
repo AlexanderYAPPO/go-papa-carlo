@@ -9,7 +9,10 @@ import (
 )
 
 func GenerateToFile(structName, pathToStruct, outputPath string) error {
-	res := target.Parse(structName, pathToStruct)
+	res, err := target.Parse(structName, pathToStruct)
+	if err != nil {
+		return err
+	}
 	adaptedTarget, err := target.CreateTarget(res, structName, pathToStruct, outputPath)
 	if err != nil {
 		return err

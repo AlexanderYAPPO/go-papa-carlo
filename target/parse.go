@@ -1,12 +1,12 @@
 package target
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"go/types"
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -18,19 +18,22 @@ const (
 	_papaCarloTagKey = "papa-carlo"
 )
 
-func Parse(targetStructName string, pathToFile string) entity.ParsingResult {
+func Parse(targetStructName string, pathToFile string) (entity.ParsingResult, error) {
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, pathToFile, nil, 0)
 	if err != nil {
-		log.Fatal(err)
+		return entity.ParsingResult{}, err
 	}
 	imports := captureImports(node)
-	allFields := captureFields(node, targetStructName)
+	allFields, found := captureFields(node, targetStructName)
+	if !found {
+		return entity.ParsingResult{}, errors.New("requested struct is not found in the file")
+	}
 	return entity.ParsingResult{
 		Imports:     imports,
 		Fields:      allFields,
 		PackageName: node.Name.Name,
-	}
+	}, nil
 }
 
 func processField(field *ast.Field) []entity.Field {
@@ -192,8 +195,9 @@ func isPredeclaredTypeName(name string) bool {
 	return ok
 }
 
-func captureFields(node *ast.File, targetStructName string) []entity.Field {
+func captureFields(node *ast.File, targetStructName string) ([]entity.Field, bool) {
 	allFields := []entity.Field{}
+	found := false
 	ast.Inspect(node, func(n ast.Node) bool {
 		if n == nil {
 			return true
@@ -212,6 +216,7 @@ func captureFields(node *ast.File, targetStructName string) []entity.Field {
 		if ts.Name.Name != targetStructName {
 			return true
 		}
+		found = true
 
 		for _, field := range st.Fields.List {
 			parsedFlatField := processField(field)
@@ -219,7 +224,7 @@ func captureFields(node *ast.File, targetStructName string) []entity.Field {
 		}
 		return true
 	})
-	return allFields
+	return allFields, found
 }
 
 func captureImports(f *ast.File) []entity.Import {

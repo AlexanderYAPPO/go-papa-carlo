@@ -81,6 +81,15 @@ func TestBuilderScenarios(t *testing.T) {
 			"field PublicField uses a type containing unexported identifiers: privateType",
 		)
 	})
+
+	t.Run("throw an error when a file is found but not the struct", func(t *testing.T) {
+		runScenarioWithExpectedError(t,
+			filepath.Join("testdata", "simple_struct", "fixture", "pkg1", "struct_with_few_fields.go"),
+			"UnknownStruct",
+			"",
+			"requested struct is not found in the file",
+		)
+	})
 }
 
 func runScenario(t *testing.T, structPath, structName, usagePath, outputFileName string) {
