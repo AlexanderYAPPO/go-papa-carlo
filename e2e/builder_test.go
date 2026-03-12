@@ -1,4 +1,4 @@
-package main
+package e2e
 
 import (
 	"os"
@@ -20,54 +20,54 @@ require github.com/stretchr/testify v1.9.0
 func TestBuilderScenarios(t *testing.T) {
 	t.Run("simple struct with few fields", func(t *testing.T) {
 		runScenario(t,
-			filepath.Join("testdata", "simple_struct", "fixture", "pkg1", "struct_with_few_fields.go"),
+			filepath.Join("..", "testdata", "simple_struct", "fixture", "pkg1", "struct_with_few_fields.go"),
 			"StructWithFewFields",
-			filepath.Join("testdata", "simple_struct", "consumer", "build_struct_with_few_fields_test.go"),
+			filepath.Join("..", "testdata", "simple_struct", "consumer", "build_struct_with_few_fields_test.go"),
 			"",
 		)
 	})
 	t.Run("omit fields by omit tag", func(t *testing.T) {
 		runScenario(t,
-			filepath.Join("testdata", "omit_field", "fixture", "pkg1", "struct_with_omit.go"),
+			filepath.Join("..", "testdata", "omit_field", "fixture", "pkg1", "struct_with_omit.go"),
 			"StructWithOmittedField",
-			filepath.Join("testdata", "omit_field", "consumer", "build_struct_with_omit_test.go"),
+			filepath.Join("..", "testdata", "omit_field", "consumer", "build_struct_with_omit_test.go"),
 			"",
 		)
 	})
 	t.Run("struct where some of the fields are optional", func(t *testing.T) {
 		runScenario(t,
-			filepath.Join("testdata", "optional_field", "fixture", "pkg1", "struct_with_optional.go"),
+			filepath.Join("..", "testdata", "optional_field", "fixture", "pkg1", "struct_with_optional.go"),
 			"StructWithOptionalField",
-			filepath.Join("testdata", "optional_field", "consumer", "build_struct_with_optional_test.go"),
+			filepath.Join("..", "testdata", "optional_field", "consumer", "build_struct_with_optional_test.go"),
 			"",
 		)
 	})
 	t.Run("struct where all fields are optional", func(t *testing.T) {
 		runScenario(t,
-			filepath.Join("testdata", "optional_field", "fixture", "pkg1", "struct_with_only_optional.go"),
+			filepath.Join("..", "testdata", "optional_field", "fixture", "pkg1", "struct_with_only_optional.go"),
 			"StructWithOnlyOptional",
-			filepath.Join("testdata", "optional_field", "consumer", "build_struct_with_only_optional_test.go"),
+			filepath.Join("..", "testdata", "optional_field", "consumer", "build_struct_with_only_optional_test.go"),
 			"",
 		)
 	})
 	t.Run("generate a builder in a different from source package", func(t *testing.T) {
 		runScenarioWithCustomOutputPackage(t,
-			filepath.Join("testdata", "custom_output_path", "fixture", "pkg1", "struct_with_few_fields.go"),
+			filepath.Join("..", "testdata", "custom_output_path", "fixture", "pkg1", "struct_with_few_fields.go"),
 			"StructWithFewFields",
-			filepath.Join("testdata", "custom_output_path", "consumer", "build_struct_with_custom_output_path_test.go"),
+			filepath.Join("..", "testdata", "custom_output_path", "consumer", "build_struct_with_custom_output_path_test.go"),
 		)
 	})
 	t.Run("struct with omitted private fields", func(t *testing.T) {
 		runScenario(t,
-			filepath.Join("testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
+			filepath.Join("..", "testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
 			"StructWithPrivateFieldsThatWorks",
-			filepath.Join("testdata", "struct_with_private_fields", "consumer", "build_struct_private_fields.go"),
+			filepath.Join("..", "testdata", "struct_with_private_fields", "consumer", "build_struct_private_fields.go"),
 			"",
 		)
 	})
 	t.Run("throw an error when a struct has not omitted private fields", func(t *testing.T) {
 		runScenarioWithExpectedError(t,
-			filepath.Join("testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
+			filepath.Join("..", "testdata", "struct_with_private_fields", "fixture", "pkg", "struct_with_private_fields.go"),
 			"StructWithPrivateFieldsThatErrors",
 			"",
 			"field privateField is a private field and cannot be used in builder generation unless omitted with tag papa-carlo:\"omit\"",
@@ -75,22 +75,21 @@ func TestBuilderScenarios(t *testing.T) {
 	})
 	t.Run("throw an error when a struct uses an unexported type", func(t *testing.T) {
 		runScenarioWithExpectedError(t,
-			filepath.Join("testdata", "struct_with_unexported_types", "fixture", "pkg", "struct_with_unexported_types.go"),
+			filepath.Join("..", "testdata", "struct_with_unexported_types", "fixture", "pkg", "struct_with_unexported_types.go"),
 			"StructWithUnexportedType",
 			"",
 			"field PublicField uses a type containing unexported identifiers: privateType",
 		)
 	})
-
 	t.Run("throw an error when a file is found but not the struct", func(t *testing.T) {
 		runScenarioWithExpectedError(t,
-			filepath.Join("testdata", "simple_struct", "fixture", "pkg1", "struct_with_few_fields.go"),
+			filepath.Join("..", "testdata", "simple_struct", "fixture", "pkg1", "struct_with_few_fields.go"),
 			"UnknownStruct",
 			"",
 			"requested struct is not found in the file",
 		)
 	})
-
+	
 	t.Run("throw an error if the source file doesn't exist", func(t *testing.T) {
 		expectedErrMsg := "open /file/that/doesnt/exist.go: no such file or directory"
 		err := pipeline.GenerateToFile("FakeStructName", "/file/that/doesnt/exist.go", "")
