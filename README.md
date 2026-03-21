@@ -1,110 +1,59 @@
-go-papa-carlo
-==============
+# papa-carlo
 
-Generate builder-style Go code from a struct definition. The library generates a chained builder with `WithX(...)` methods and a final `Build(). The main difference of this builder library from most other builders for go is that it ensures strong field requirements. 
+The papa-carlo CLI tool generates builders from a struct definition. The main difference between this tool and most other builder generators for Go is that it ensures strong field requirements. This means that the builder can throw an error during compilation if the code attempts to generate an object without specifying all required fields.
 
-CLI Usage:
-----------
-
-```bash
-go-papa-carlo <struct_name> <path_to_struct> [output_path]
+Consider the following struct:
+```go
+type User struct {
+    Name string
+    Age int
+}
 ```
 
-If `output_path` is omitted, generated code is written next to the input struct file as `<struct_name>_builder_gen.go`.
-If `output_path` points to another package directory, generated builders stay in that package and reference the target struct from its original package.
+If we try to build an instance of `User` with papa-carlo, then both Name and Age must be specified. Otherwise, the code will fail to compile:
+```
+user = NewUserBuilder().WithName("John").Build() // fails because Age was not specified
 
-Testing:
---------
-
-Run all tests from the repository root with:
-
-```bash
-go test ./...
+user = NewUserBuilder().WithName("John").WithAge(22).Build() // succeeds
 ```
 
-Coverage:
----------
+These builders are also nicely picked up by IntelliSense:
+![usage example](./docs/intellisense-example.gif)
 
-For a quick per-package coverage view, run:
-
-```bash
-go test -cover ./...
-```
-
-For coverage that reflects the real behavior of this project, run:
+## Installation
 
 ```bash
-go test -coverpkg=./... -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out
+go install github.com/AlexanderYAPPO/go-papa-carlo@latest
 ```
 
-The `-coverpkg=./...` flag is required because the main integration test in `builder_integration_test.go` lives in the root package, but it exercises most of the implementation through imported packages such as `pipeline`, `generate`, and `target`. Without `-coverpkg`, Go records coverage only for the package currently under test, so those imported packages incorrectly appear as uncovered even though the integration test is using them.
+Make sure your Go bin directory is on your `PATH` so you can run `go-papa-carlo` from the command line.
 
-This is slightly unorthodox, but it matches how the project is structured: the integration test validates generated code end-to-end while calling into other packages from the top-level test. Note that the nested `go test` executed inside the temporary fixture module is a separate process, so its own coverage is not merged back into the repository coverage report. The outer `go test -coverpkg=./...` command is therefore the best way to measure meaningful coverage for this codebase.
-
-Problem:
---------
-In Go, when you need to create a struct, there's no nice way of making required parameters. If you create a struct by initializing an object, Go doesn't require you to specify all fields. Therefore when you add a new field, you cannot make the compiler fail if there are struct initializations that don't specify this field:
+Example:
 
 ```go
-type A struct {
-    OldField int
-    NewField int // imagine this is a new field we are adding
-}
+// user.go
+package model
 
-// We cannot make NewField a required param. Because of that this addition of the new 
-// field won't fail the compildation of the code below
-myObj := A{
-    OldField: 1, 
+type User struct {
+	Name string
+	Age  int
 }
 ```
 
-Alternatively, you may create a constructo function New that takes required fields as positional arguments. But for complex structs, the New method will have an interface which is difficult to work with. The more fields there is the harder it gets to read the code:
-
-```go
-type A struct {
-    Field1 int
-    Field2 int
-    Field3 int
-    Field4 int
-    Field5 int
-}
-
-func New(Field1 int, Field2 int, Field3 int, Field4 int, Field5 int) A {}
-
-myObj := New(1, 2, 3, 4, 5)
+```bash
+go-papa-carlo User ./model/user.go
 ```
 
-Solution:
----------
+This generates `./model/User_builder_gen.go` with a builder for `User`.
 
-What this library does is it generates a chain of builder structs in such a way that each builder gives you only one method to call. The struct interfaces are chained down to the point until there's no required fields left. Consider the example below:
+## Features:
 
-```go
-type A struct {
-    Field1 int
-    Field2 int
-    Field3 int
-}
-
-// After builders are generated, we can create an object with the following code:
-
-myObj := NewABuilder(). // The result of this function gives you a struct with only one method
-    WithField1(1). // same for the results of this call. You cannot generate the object until all fields are specified.
-    WithField2(2).
-    WithField3(3).
-    Build() // only this call gives you the final object.
-```
-
-Features:
----------
-
-**Omit** - omitting the field such that it won't be mentioned in the builder. Use tag `papa-carlo:omit`
+**Omit** - omit the field so that it won't be mentioned in the builder. Use tag `papa-carlo:"omit"`
 
 ```
 type OmittableFields struct {
 	RequiredInt    int
-	OmmitableString string `papa-carlo:"omit"`
+	OmittableString string `papa-carlo:"omit"`
 }
 
 got := pkg1.NewOmittableFieldsBuilder().
@@ -112,7 +61,7 @@ got := pkg1.NewOmittableFieldsBuilder().
     Build()
 ```
 
-**Optional** - mark the field as optional such that it's not required to be specified when the builder is used. The optional fields can be specified only at the end of the list (before Build() and after all required fields). Use tag `para-carlo:optional`. 
+**Optional** - mark the field as optional so that it's not required to be specified when the builder is used. The optional fields can be specified only at the end of the list (before Build() and after all required fields). Use tag `papa-carlo:"optional"`.
 ```
 type OptionalFields struct {
 	RequiredInt    int
@@ -124,3 +73,46 @@ got := pkg1.NewStructWithOptionalFieldsBuilder().
     WithOptionalOptString("hello").
     Build()
 ```
+
+## Restrictions:
+
+* papa-carlo allows placing builders in packages different from the struct's package. When it happens, the builder cannot work with fields that are private or that use unexported types. Therefore the tool will intentionally fail if such fields are not omitted.
+
+## Why this CLI tool exists:
+In Go, when you need to create a struct, there's no nice way to make parameters required. If you create a struct by initializing an object, Go doesn't require you to specify all fields. Therefore, when you add a new field, you cannot make the compiler fail if there are struct initializations that don't specify this field.
+
+This led to the idea of generating builders in such a way that they make it mandatory to specify all required fields.
+
+I explain the reason why this approach could be appealing for some developers in more detail in my [blog](https://yappo.cc/posts/2026-02-16-papa-carlo/)
+
+## Development
+
+### CLI Usage:
+
+```bash
+go-papa-carlo <struct_name> <path_to_struct> [output_path]
+```
+
+If `output_path` is omitted, generated code is written next to the input struct file as `<struct_name>_builder_gen.go`.
+If `output_path` points to another package directory, generated builders stay in that package and reference the target struct from its original package.
+
+### Testing:
+
+Run all tests from the repository root with:
+
+```bash
+go test ./...
+```
+
+### Coverage:
+
+For coverage that reflects the real behavior of this project, run:
+
+```bash
+go test -coverpkg=./... -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
+
+The `-coverpkg=./...` flag is required because the main integration test in `e2e/builder_test.go` lives in a dedicated package, but it exercises most of the implementation through imported packages such as `pipeline`, `generate`, and `target`. Without `-coverpkg`, Go records coverage only for the package currently under test, so those imported packages incorrectly appear as uncovered even though the integration test is using them.
+
+This is slightly unorthodox, but it matches how the project is structured: the integration test validates generated code end-to-end while calling into other packages from the top-level test. Note that the nested `go test` executed inside the temporary fixture module is a separate process, so its own coverage is not merged back into the repository coverage report. The outer `go test -coverpkg=./...` command is therefore the best way to measure meaningful coverage for this codebase.
