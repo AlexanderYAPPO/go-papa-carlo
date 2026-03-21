@@ -20,15 +20,15 @@ user = NewUserBuilder().WithName("John").WithAge(22).Build() // succeeds
 These builders are also nicely picked up by IntelliSense:
 ![usage example](./docs/intellisense-example.gif)
 
-## Installation
+## CLI Usage:
 
 ```bash
-go install github.com/AlexanderYAPPO/go-papa-carlo@latest
+go-papa-carlo <struct_name> <path_to_struct> [output_path]
 ```
 
-Make sure your Go bin directory is on your `PATH` so you can run `go-papa-carlo` from the command line.
+If `output_path` is omitted, generated code is written next to the input struct file as `<struct_name>_builder_gen.go`. Otherwise, the builde will be generated in the output_path folder.
 
-Example:
+### Example:
 
 ```go
 // user.go
@@ -45,6 +45,14 @@ go-papa-carlo User ./model/user.go
 ```
 
 This generates `./model/User_builder_gen.go` with a builder for `User`.
+
+## Installation
+
+```bash
+go install github.com/AlexanderYAPPO/go-papa-carlo@latest
+```
+
+Make sure your Go bin directory is on your `PATH` so you can run `go-papa-carlo` from the command line.
 
 ## Features:
 
@@ -86,15 +94,6 @@ This led to the idea of generating builders in such a way that they make it mand
 I explain the reason why this approach could be appealing for some developers in more detail in my [blog](https://yappo.cc/posts/2026-02-16-papa-carlo/)
 
 ## Development
-
-### CLI Usage:
-
-```bash
-go-papa-carlo <struct_name> <path_to_struct> [output_path]
-```
-
-If `output_path` is omitted, generated code is written next to the input struct file as `<struct_name>_builder_gen.go`.
-If `output_path` points to another package directory, generated builders stay in that package and reference the target struct from its original package.
 
 ### Testing:
 
