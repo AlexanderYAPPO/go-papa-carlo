@@ -1,6 +1,6 @@
 # papa-carlo
 
-The papa-carlo CLI tool is a code generation tool for generating builders with string field requirements from struct definitions. Generated builders can throw an error during compilation if the code attempts to generate an object without specifying all required fields.
+The papa-carlo CLI tool is a code generation tool for generating builders with strong field requirements from struct definitions. Generated builders can throw an error during compilation if the code attempts to generate an object without specifying all required fields.
 
 Consider the following struct:
 ```go
