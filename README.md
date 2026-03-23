@@ -1,6 +1,6 @@
 # papa-carlo
 
-The papa-carlo CLI tool generates builders from a struct definition. The main difference between this tool and most other builder generators for Go is that it ensures strong field requirements. This means that the builder can throw an error during compilation if the code attempts to generate an object without specifying all required fields.
+The papa-carlo CLI tool is a code generation tool for generating builders with string field requirements from struct definitions. Generated builders can throw an error during compilation if the code attempts to generate an object without specifying all required fields.
 
 Consider the following struct:
 ```go
@@ -19,6 +19,8 @@ user = NewUserBuilder().WithName("John").WithAge(22).Build() // succeeds
 
 These builders are also nicely picked up by IntelliSense:
 ![usage example](./docs/intellisense-example.gif)
+
+This is made possible by generating a chain of builders where each builder is dedicated to a single required field with only one method `WithX(...)`. The final builder in the chan has method `Build()` which produces the struct itself.
 
 ## CLI Usage:
 
